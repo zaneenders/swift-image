@@ -11,3 +11,5 @@ Package.resolved
 # Editor files
 /.vscode/
 
+# Trash
+out.jpg

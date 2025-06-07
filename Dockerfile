@@ -18,7 +18,10 @@ RUN swift build -c release --static-swift-stdlib
 
 WORKDIR /staging
 
-RUN cp "$(swift build --package-path /build -c release --show-bin-path)/swift-image" ./
+RUN cp -r /build/Fixtures ./Fixtures
+
+RUN cp "$(swift build --package-path /build -c release --show-bin-path)/swift-image" ./ 
+
 
 FROM swift:6.1-jammy
 
