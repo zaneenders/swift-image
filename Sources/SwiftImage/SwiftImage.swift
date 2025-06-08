@@ -11,47 +11,55 @@ extension FilePath {
     try await fh.close()
     return buffer
   }
+
+  func decodeImageFile(to name: String) async -> FilePath? {
+    guard (try? await FileSystem.shared.info(forFileAt: self)) != nil else {
+      print("missing file: \(self.string)")
+      return nil
+    }
+    guard let buffer = try? await self.getBuffer() else {
+      print("unable to get buffer")
+      return nil
+    }
+    guard let data = buffer.getData(at: 0, length: buffer.readableBytes, byteTransferStrategy: .automatic) else {
+      print("Unable to read bytes")
+      return nil
+    }
+
+    let out = FilePath(name)
+    if let d = Data(base64Encoded: data) {
+      do {
+        try await d.write(toFileAt: out, options: .newFile(replaceExisting: true))
+        return out
+      } catch {
+        print(error)
+      }
+    }
+    return nil
+  }
 }
 
 @main
 struct SwiftImage {
   static func main() async {
     let testPath = FilePath("Fixtures/test.txt")
-    guard (try? await FileSystem.shared.info(forFileAt: testPath)) != nil else {
-      print("missing file: \(testPath.string)")
-      return
-    }
     print(FileManager.default.fileExists(atPath: "Fixtures/test.txt"))
-    let url: FilePath = "idk.png"
     do {
-      let buffer = try await testPath.getBuffer()
-      guard let data = buffer.getData(at: 0, length: buffer.readableBytes, byteTransferStrategy: .automatic) else {
-        print("Unable to read bytes")
+      let png = "idk.png"
+      guard let outPath = await testPath.decodeImageFile(to: png) else {
+        print("Error decoding file \(testPath.string)")
         return
       }
-      if let d = Data(base64Encoded: data) {
-        do {
-          try await d.write(toFileAt: url, options: .newFile(replaceExisting: true))
-          print("File created: \(url.string)")
-        } catch {
-          print(error)
-        }
-      }
+      print(FileManager.default.fileExists(atPath: png))
+      print(FileManager.default.fileExists(atPath: "out.jpg"))
+      _ = try await run(
+        .name("ffmpeg"), arguments: ["-i", png, "out.jpg"],
+        output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
+        error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false))
+      print(FileManager.default.fileExists(atPath: "out.jpg"))
     } catch {
       print(error)
       return
     }
-
-    print(FileManager.default.fileExists(atPath: "idk.png"))
-    print(FileManager.default.fileExists(atPath: "out.jpg"))
-    do {
-      _ = try await run(
-        .name("ffmpeg"), arguments: ["-i", "idk.png", "out.jpg"],
-        output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
-        error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false))
-    } catch {
-      print(error)
-    }
-    print(FileManager.default.fileExists(atPath: "out.jpg"))
   }
 }
