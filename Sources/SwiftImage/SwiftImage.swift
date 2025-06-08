@@ -1,4 +1,5 @@
 import Foundation
+import Hummingbird
 import NIOCore
 import Subprocess
 import _NIOFileSystem
@@ -39,28 +40,49 @@ extension FilePath {
   }
 }
 
+func ffmpeg() async {
+  let testPath = FilePath("Fixtures/test.txt")
+  print(FileManager.default.fileExists(atPath: "Fixtures/test.txt"))
+  do {
+    let png = "idk.png"
+    let jpg = "out.jpg"
+    guard await testPath.decodeImageFile(to: png) != nil else {
+      print("Error decoding file \(testPath.string)")
+      return
+    }
+    print(FileManager.default.fileExists(atPath: png))
+    print(FileManager.default.fileExists(atPath: jpg))
+    _ = try await run(
+      .name("ffmpeg"), arguments: ["-i", png, jpg],
+      output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
+      error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false))
+    print(FileManager.default.fileExists(atPath: "out.jpg"))
+  } catch {
+    print(error)
+    return
+  }
+}
+
+func buildServer() -> any ApplicationProtocol {
+  let router = Router()
+  router.get("hello") { request, context -> Response in
+    return Response(status: .ok, body: ResponseBody(byteBuffer: ByteBuffer(string: "Hello")))
+  }
+  let app = Application(
+    router: router,
+    configuration: .init(address: .hostname("0.0.0.0", port: 8080))
+  )
+  return app
+}
+
 @main
 struct SwiftImage {
   static func main() async {
-    let testPath = FilePath("Fixtures/test.txt")
-    print(FileManager.default.fileExists(atPath: "Fixtures/test.txt"))
+    let server = buildServer()
     do {
-      let png = "idk.png"
-      let jpg = "out.jpg"
-      guard await testPath.decodeImageFile(to: png) != nil else {
-        print("Error decoding file \(testPath.string)")
-        return
-      }
-      print(FileManager.default.fileExists(atPath: png))
-      print(FileManager.default.fileExists(atPath: jpg))
-      _ = try await run(
-        .name("ffmpeg"), arguments: ["-i", png, jpg],
-        output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
-        error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false))
-      print(FileManager.default.fileExists(atPath: "out.jpg"))
+      try await server.runService()
     } catch {
       print(error)
-      return
     }
   }
 }
