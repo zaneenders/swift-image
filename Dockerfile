@@ -18,8 +18,6 @@ RUN swift build -c release --static-swift-stdlib
 
 WORKDIR /staging
 
-RUN cp -r /build/Fixtures ./Fixtures
-
 RUN cp "$(swift build --package-path /build -c release --show-bin-path)/swift-image" ./ 
 
 

@@ -3,9 +3,9 @@ import Hummingbird
 import HummingbirdTesting
 import Testing
 import _NIOFileSystem
-import _NIOFileSystemFoundationCompat
 
 @testable import SwiftImage
+@testable import TestClient
 
 @Suite
 struct SwiftImageTests {
@@ -36,18 +36,5 @@ struct SwiftImageTests {
       let err = String(buffer: rsp.body)
       #expect(err == "Executable \"ffmpeg\" is not found or cannot be executed.")
     }
-  }
-}
-
-extension ByteBuffer {
-  func b64Decode() -> ByteBuffer? {
-    guard let data = self.getData(at: 0, length: self.readableBytes, byteTransferStrategy: .automatic) else {
-      print("Unable to read bytes")
-      return nil
-    }
-    if let d = Data(base64Encoded: data) {
-      return ByteBuffer(data: d)
-    }
-    return nil
   }
 }

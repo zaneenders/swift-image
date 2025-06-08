@@ -28,6 +28,7 @@ func buildServer() -> any ApplicationProtocol {
       let rsp = Response(status: .ok, headers: [fileNameHeader: fileName], body: body)
       // TODO delete file after send
       // Because we are using the system call to send the file we have to wait to clean up.
+      context.logger.trace("file converted: \(fileName)")
       return rsp
     } catch {
       return Response(status: .badRequest)
