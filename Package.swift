@@ -20,13 +20,17 @@ let package = Package(
         .product(name: "_NIOFileSystem", package: "swift-nio"),
         .product(name: "_NIOFileSystemFoundationCompat", package: "swift-nio"),
         .product(name: "Hummingbird", package: "hummingbird"),
-      ]),
+      ],
+    ),
     .testTarget(
       name: "SwiftImageTests",
       dependencies: [
         "SwiftImage",
         .product(name: "Hummingbird", package: "hummingbird"),
         .product(name: "HummingbirdTesting", package: "hummingbird"),
+      ],
+      resources: [
+        .process("Resources")
       ]
     ),
   ]
