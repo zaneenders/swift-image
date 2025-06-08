@@ -46,14 +46,15 @@ struct SwiftImage {
     print(FileManager.default.fileExists(atPath: "Fixtures/test.txt"))
     do {
       let png = "idk.png"
-      guard let outPath = await testPath.decodeImageFile(to: png) else {
+      let jpg = "out.jpg"
+      guard await testPath.decodeImageFile(to: png) != nil else {
         print("Error decoding file \(testPath.string)")
         return
       }
       print(FileManager.default.fileExists(atPath: png))
-      print(FileManager.default.fileExists(atPath: "out.jpg"))
+      print(FileManager.default.fileExists(atPath: jpg))
       _ = try await run(
-        .name("ffmpeg"), arguments: ["-i", png, "out.jpg"],
+        .name("ffmpeg"), arguments: ["-i", png, jpg],
         output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
         error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false))
       print(FileManager.default.fileExists(atPath: "out.jpg"))
